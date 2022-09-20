@@ -1,0 +1,19 @@
+# This file will consist 2n+1 lines
+# Number of nodes (n), minPerActive, maxPerActive, minSendDelay(ms), snapshotDelay(ms), maxNumber
+5, 2, 4, 1000, 1000, 3
+
+# Node ID, Host name, port
+0 localhost 8000
+1 localhost 8001
+2 localhost 8002
+3 localhost 8003
+4 localhost 8004
+5 localhost 8005
+
+# Neighbours of respective nodes
+2
+3 5
+0 5
+1 4
+3 5
+1 2 4
