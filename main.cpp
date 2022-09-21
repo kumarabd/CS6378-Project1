@@ -1,12 +1,12 @@
-#include<iostream>
-#include<cstdlib>
+#include <iostream>
+#include <cstdlib>
+#include <fstream>
+#include "readConfig.cpp"
 #include "types.h"
-
 using namespace std;
 
 int main()
 {
-    //read_config();
     printf("Reading config\n");
     int n = 6;
     int minPerActive = 2;
@@ -16,6 +16,7 @@ int main()
     int maxNumber = 3;
     std::string node_host[6] = {"localhost", "localhost", "localhost", "localhost", "localhost", "localhost"};
     int node_port[6] = {8000, 8001, 8002, 8003, 8004, 8005};
+	//read_config();
 
     printf("Adding nodes\n");
     std::list<Node> node_list;

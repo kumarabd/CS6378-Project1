@@ -1,2 +1,4 @@
 build/
 server.cpp
+a.out
+.vscode/tasks.json
