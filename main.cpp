@@ -1,5 +1,7 @@
 #include <iostream>
 #include <cstdlib>
+#include <fstream>
+#include "readConfig.cpp"
 using namespace std;
 
 int main()
@@ -16,7 +18,7 @@ int main()
 	//		cout << env_var[i] << "= " << env_val[i] << endl;
 	//}
 
-    //read_config();
+	read_config();
 
     //create_nodes();
 
