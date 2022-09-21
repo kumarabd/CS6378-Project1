@@ -1,25 +1,30 @@
-#include <iostream>
-#include <cstdlib>
+#include<iostream>
+#include<cstdlib>
+#include "types.h"
+
 using namespace std;
 
 int main()
 {
-	///* A list of possible environment variables*/
-	//const char *env_var[5] = {"NODE_COUNT","minPerActive","maxPerActive","minSendDelay","maxNumber"};
-	//char *env_val[5];
-
-	//for(int i=0; i<5; i++)
-	//{
-	//	/* Getting environment value if exists */
-	//	env_val[i] = getenv(env_var[i]);
-	//	if (env_val[i] != NULL)
-	//		cout << env_var[i] << "= " << env_val[i] << endl;
-	//}
-
     //read_config();
+    printf("Reading config\n");
+    int n = 6;
+    int minPerActive = 2;
+    int maxPerActive = 4;
+    int minSendDelay = 1000;
+    int snapshotDelay = 1000;
+    int maxNumber = 3;
+    std::string node_host[6] = {"localhost", "localhost", "localhost", "localhost", "localhost", "localhost"};
+    int node_port[6] = {8000, 8001, 8002, 8003, 8004, 8005};
 
-    //create_nodes();
+    printf("Adding nodes\n");
+    std::list<Node> node_list;
+    for(int i=0; i<6; i++) {
+        node_list.push_back(Node(i, node_host[i], node_port[i]));
+    }
 
-    //create_network(nodes);
+    printf("Creating network\n");
+    //Network network = Network(minPerActive, maxPerActive, minSendDelay, snapshotDelay, maxNumber);
+    //network.add_nodes(node_list);
 
 }

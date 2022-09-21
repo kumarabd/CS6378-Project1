@@ -1,61 +1,60 @@
-#include<iostream>
-#include<string>
-#include<list>
+#include "types.h"
 
-class Channel {
-    private:
-        std::string host;
-        int port;
-    public:
-        Channel(){};
-        Channel(std::string h, int p) {
-            host = h;
-            port = p;
-        }
+Channel::Channel() {};
 
-        void start_server() {
-            
-        }
-};
+Channel::Channel(std::string h, int p) {
+    printf("Creating socket\n");
+    // Create socket
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+       perror("socket failed");
+       exit(EXIT_FAILURE);
+    }
 
-class Node {
-    private:
-        int id;
-        bool active_status;
-        Channel channel;
-        std::list<Node> neighbours;
-    public:
-        Node(){};
-        Node(int id, std::string h, int p) {
-            id = id;
-            active_status = false;
-            channel = Channel(h, p);
+    socket_address.sin_family = AF_INET;
+    socket_address.sin_addr.s_addr = INADDR_ANY;
+    socket_address.sin_port = htons(p);
+    if (bind(server_fd, (struct sockaddr*) &socket_address, sizeof(socket_address)) < 0) {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+}
 
-            // start node server
-            channel.start_server();
-        }
+void Channel::start_socket() {
+    // 3 is the max queue limit
+    if (listen(server_fd, 3) < 0) {
+        perror("listening");
+        exit(EXIT_FAILURE);
+    }
 
-        void add_neighbours(int id, int val) {
-            // Add neighbours
-        }
-};
+    socklen_t addr_size = sizeof(socket_address);
+    int newSocket = accept(server_fd, (struct sockaddr*)&socket_address, &addr_size);
+    int message = 0;
+    recv(newSocket, &message, sizeof(message), 0);
+    printf("message receieved: %d",message);
+}
 
-class Network {
-    private:
-        int number_of_nodes;
-        int minPerActive;
-        int maxPerActive;
-        int minSendDelay;
-        int maxNumber;
-        int snapshotDelay;
-        std::list<Node> nodes;
-    public:
-        Network(int n, int mipa, int mapa, int msd, int mn, int sd) {
-            number_of_nodes = n;
-            minPerActive = mipa;
-            maxPerActive = mapa;
-            minSendDelay = msd;
-            maxNumber = mn;
-            snapshotDelay = sd; 
-        }
-};
+Node::Node() {};
+
+Node::Node(int id, std::string h, int p) {
+    id = id;
+    active_status = false;
+    channel = Channel(h, p);
+
+    // start node server
+    printf("Starting socket for node: %d", id);
+    channel.start_socket();
+}
+
+Network::Network(int mipa, int mapa, int msd, int mn, int sd) {
+    number_of_nodes = 0;
+    minPerActive = mipa;
+    maxPerActive = mapa;
+    minSendDelay = msd;
+    maxNumber = mn;
+    snapshotDelay = sd;
+}
+
+void Network::add_nodes(std::list<Node> ns) {
+    nodes = ns;
+    number_of_nodes = nodes.size();
+}
