@@ -1,2 +1,6 @@
 # Project 1
-# Cloned the Repo!!
+
+Team Details:
+Abishek Kumar
+Rohan Ippalapally (RXI200010)
+-
