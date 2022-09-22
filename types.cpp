@@ -35,9 +35,10 @@ void Channel::start_socket() {
 
 Node::Node() {};
 
-Node::Node(int id, std::string h, int p) {
+Node::Node(int id, std::string h, int p, int mn) {
     printf("Creating Node: %d\n", id);
     id = id;
+    maxNumber = mn;
     active_status = false;
     channel = Channel(h, p);
 
@@ -50,16 +51,27 @@ int Node::get_id() {
     return id;
 }
 
-void Node::send_message(Node n) {
-    printf("Sending message to node: %d\n", n.get_id());
+void Node::send_message(Node * n) {
+    printf("Sending message to node: %d\n", n->get_id());
 }
 
-Network::Network(int mipa, int mapa, int msd, int mn, int sd) {
+void Node::add_neighbours(int id, int val) {
+    // Add here
+}
+
+std::list<Node> Node::get_neighbours() {
+    return this->neighbours;
+}
+
+void Node::iterate_max_number() {
+    this->maxNumber++;
+}
+
+Network::Network(int mipa, int mapa, int msd, int sd) {
     number_of_nodes = 0;
     minPerActive = mipa;
     maxPerActive = mapa;
     minSendDelay = msd;
-    maxNumber = mn;
     snapshotDelay = sd;
 }
 
@@ -69,7 +81,24 @@ void Network::add_nodes(std::list<Node*> ns) {
     number_of_nodes = nodes.size();
 }
 
+
 void Network::run() {
     printf("Running the network");
-    //while()
+    bool flag = true;
+    while(flag) {
+        // Setting random node to active
+        int num = rand() % number_of_nodes;
+        auto beg = nodes.begin();
+        std::advance(beg, num);
+        Node * curr_node = *beg;
+
+        // Active node send message to random node
+        num = rand() % curr_node->get_neighbours().size(); // NOTE: Check if the random number becomes itself
+        beg = nodes.begin();
+        std::advance(beg, num);
+        curr_node->send_message(*beg);
+        curr_node->iterate_max_number();
+        
+        // Remove the node from network if the node reach maxNumber of messages
+    }
 }

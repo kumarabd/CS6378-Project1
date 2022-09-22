@@ -1,6 +1,7 @@
 #include<iostream>
 #include<string>
 #include<list>
+#include <iterator>
 #include<pthread.h>
 #include<sys/socket.h>
 #include<sys/types.h> 
@@ -29,13 +30,16 @@ class Node {
         int id;
         bool active_status;
         Channel channel;
+        int maxNumber;
         std::list<Node> neighbours;
     public:
         Node();
-        Node(int id, std::string h, int p);
+        Node(int id, std::string h, int p, int mn);
         int get_id();
-        void send_message(Node node);
+        void send_message(Node * node);
         void add_neighbours(int id, int val);
+        std::list<Node> get_neighbours();
+        void iterate_max_number();
 };
 
 class Network {
@@ -44,11 +48,10 @@ class Network {
         int minPerActive;
         int maxPerActive;
         int minSendDelay;
-        int maxNumber;
         int snapshotDelay;
         std::list<Node*> nodes;
     public:
-        Network(int mipa, int mapa, int msd, int mn, int sd);
+        Network(int mipa, int mapa, int msd, int sd);
         void add_nodes(std::list<Node*> n);
         void run();
 };
