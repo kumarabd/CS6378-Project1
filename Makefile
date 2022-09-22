@@ -1,5 +1,5 @@
 all:
-	g++ main.cpp types.cpp -o build/app 
+	g++ main.cpp types.cpp output.cpp -o build/app 
 	./build/app
 
 clean:

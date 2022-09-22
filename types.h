@@ -33,6 +33,8 @@ class Node {
     public:
         Node();
         Node(int id, std::string h, int p);
+        int get_id();
+        void send_message(Node node);
         void add_neighbours(int id, int val);
 };
 
@@ -48,4 +50,5 @@ class Network {
     public:
         Network(int mipa, int mapa, int msd, int mn, int sd);
         void add_nodes(std::list<Node*> n);
+        void run();
 };

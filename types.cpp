@@ -46,6 +46,14 @@ Node::Node(int id, std::string h, int p) {
     channel.start_socket();
 }
 
+int Node::get_id() {
+    return id;
+}
+
+void Node::send_message(Node n) {
+    printf("Sending message to node: %d\n", n.get_id());
+}
+
 Network::Network(int mipa, int mapa, int msd, int mn, int sd) {
     number_of_nodes = 0;
     minPerActive = mipa;
@@ -56,6 +64,12 @@ Network::Network(int mipa, int mapa, int msd, int mn, int sd) {
 }
 
 void Network::add_nodes(std::list<Node*> ns) {
+    printf("Adding nodes to the network\n");
     nodes = ns;
     number_of_nodes = nodes.size();
+}
+
+void Network::run() {
+    printf("Running the network");
+    //while()
 }

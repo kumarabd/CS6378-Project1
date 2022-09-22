@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include "readConfig.cpp"
 #include "types.h"
+#include "output.h"
 using namespace std;
 
 struct node_args {
@@ -26,7 +27,7 @@ int main()
 	ReadConfig config = ReadConfig();
     config.read_config();
 
-    printf("Adding nodes\n");
+    printf("Gathering nodes\n");
     std::list<Node*> node_list;
     pthread_t * threads = new pthread_t[config.node];
     for(int i=0; i<config.node; i++) {
@@ -41,17 +42,23 @@ int main()
         node_list.push_back(&node_obj);
     }
 
-    // wait for the threads
+    // create a network
+    printf("Creating network\n");
+    Network network = Network(config.minPerActive, config.maxPerActive, config.minSendDelay, config.snapshotDelay, config.maxNumber);
+    network.add_nodes(node_list);
+    printf("Network created\n");
+
+    // run topology
+    printf("Run topology");
+    network.run();
+
+    // Generate output
+    //generate_output(config.node);
+
+     // wait for the threads
     void *status;
     for(int i=0; i<config.node; i++) {
         pthread_join(threads[i], &status);
         printf("node status: %d\n",*(int*)status);
     }
-
-    printf("Creating network\n");
-    Network network = Network(config.minPerActive, config.maxPerActive, config.minSendDelay, config.snapshotDelay, config.maxNumber);
-    network.add_nodes(node_list);
-
-    // run topology
-
 }
