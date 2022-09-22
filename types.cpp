@@ -19,7 +19,7 @@ Channel::Channel(std::string h, int p) {
     }
 }
 
-void Channel::start_socket() {
+void Channel::start_socket(int * newSocket) {
     // 3 is the max queue limit
     if (listen(server_fd, 3) < 0) {
         perror("listening");
@@ -27,32 +27,71 @@ void Channel::start_socket() {
     }
 
     socklen_t addr_size = sizeof(socket_address);
-    int newSocket = accept(server_fd, (struct sockaddr*)&socket_address, &addr_size);
-    int message = 0;
-    recv(newSocket, &message, sizeof(message), 0);
-    printf("message receieved: %d",message);
+    *newSocket = accept(server_fd, (struct sockaddr*)&socket_address, &addr_size);
+}
+
+void Channel::send_socket() {
+    if (connect(this->server_fd, (struct sockaddr *)&this->socket_address, sizeof(this->socket_address))) {
+        perror("sending");
+        exit(EXIT_FAILURE);
+    }
+
+    close(this->server_fd);
 }
 
 Node::Node() {};
 
-Node::Node(int id, std::string h, int p, int mn) {
+Node::Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd) {
     printf("Creating Node: %d\n", id);
     id = id;
     maxNumber = mn;
+    minPerActive = mipa;
+    maxPerActive = mapa;
+    minSendDelay = msd;
     active_status = false;
     channel = Channel(h, p);
 
     // start node server
     printf("Starting socket for node: %d\n", id);
-    channel.start_socket();
+    int message = 0;
+    int newSocket;
+    channel.start_socket(&newSocket);
+    // Listen for messages
+    while(1) {
+        recv(newSocket, &message, sizeof(message), 0);
+        printf("message receieved: %d",message);
+        // Active node send message to random node
+        // if not then
+        // Remove the node from network if the node reach maxNumber of messages
+        if(this->limit()) {
+            this->active_status = false;
+        } else{
+            std::list<Node> nb = this->get_neighbours();
+            int num = rand() % nb.size(); // NOTE: Check if the random number becomes itself
+            auto beg = nb.begin();
+            std::advance(beg, num);
+            Node snode = *beg;
+            snode.send_message();
+            this->iterate_max_number();
+        }
+        // Wait for minSendDelay after sending the message
+        usleep(minSendDelay);
+    }
 }
 
 int Node::get_id() {
     return id;
 }
 
-void Node::send_message(Node * n) {
-    printf("Sending message to node: %d\n", n->get_id());
+void Node::send_message() {
+    // Client implementation
+    printf("Sending message to node: %d\n", this->get_id());
+    this->channel.send_socket();
+}
+
+void Node::listen() {
+    while(1) {
+    }
 }
 
 void Node::add_neighbours(int id, int val) {
@@ -64,14 +103,18 @@ std::list<Node> Node::get_neighbours() {
 }
 
 void Node::iterate_max_number() {
-    this->maxNumber++;
+    this->maxNumber--;
 }
 
-Network::Network(int mipa, int mapa, int msd, int sd) {
+bool Node::limit() {
+    if(this->maxNumber == 0) {
+        return true;
+    }
+    return false;
+}
+
+Network::Network(int sd) {
     number_of_nodes = 0;
-    minPerActive = mipa;
-    maxPerActive = mapa;
-    minSendDelay = msd;
     snapshotDelay = sd;
 }
 
@@ -85,20 +128,20 @@ void Network::add_nodes(std::list<Node*> ns) {
 void Network::run() {
     printf("Running the network");
     bool flag = true;
-    while(flag) {
-        // Setting random node to active
-        int num = rand() % number_of_nodes;
-        auto beg = nodes.begin();
-        std::advance(beg, num);
-        Node * curr_node = *beg;
-
-        // Active node send message to random node
-        num = rand() % curr_node->get_neighbours().size(); // NOTE: Check if the random number becomes itself
-        beg = nodes.begin();
-        std::advance(beg, num);
-        curr_node->send_message(*beg);
-        curr_node->iterate_max_number();
+    while(1) {
+        if(flag) {
+            // Setting random node to active
+            int num = rand() % number_of_nodes;
+            auto beg = nodes.begin();
+            std::advance(beg, num);
+            Node * curr_node = *beg;
+            curr_node->send_message();
+            flag = false;
+        }
         
-        // Remove the node from network if the node reach maxNumber of messages
+        // Stop if everything is passive || the list is empty
+        if(nodes.size() == 0) {
+            break;
+        }
     }
 }

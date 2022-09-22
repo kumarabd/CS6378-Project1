@@ -14,11 +14,14 @@ struct node_args {
     int port;
     int mn;
     Node * node_addr;
+    int mipa;
+    int mapa;
+    int msd;
 };
 
 void create_nodes(node_args *args) {
     struct node_args *as = args;
-    Node node_obj = Node(as->id, as->host, as->port, as->mn);
+    Node node_obj = Node(as->id, as->host, as->port, as->mn, as->mipa, as->mapa, as->msd);
     as->node_addr = &node_obj;
 }
 
@@ -34,7 +37,7 @@ int main()
     for(int i=0; i<config.node; i++) {
         // Create thread
         Node node_obj;
-        struct node_args args = { .id = i, .host = config.hostNames[i], .port = config.ports[i], .mn = config.maxNumber , .node_addr = &node_obj};
+        struct node_args args = { .id = i, .host = config.hostNames[i], .port = config.ports[i], .mn = config.maxNumber , .node_addr = &node_obj, .mipa = config.minPerActive, .mapa = config.maxPerActive, .msd = config.minSendDelay};
         if(pthread_create(&threads[i], NULL, (void* (*)(void*))  (&create_nodes), (void *) &args)) {
             perror("thread create failed");
             exit(EXIT_FAILURE);
@@ -45,7 +48,7 @@ int main()
 
     // create a network
     printf("Creating network\n");
-    Network network = Network(config.minPerActive, config.maxPerActive, config.minSendDelay, config.snapshotDelay);
+    Network network = Network(config.snapshotDelay);
     network.add_nodes(node_list);
     printf("Network created\n");
 
