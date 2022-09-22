@@ -36,12 +36,13 @@ void Channel::start_socket() {
 Node::Node() {};
 
 Node::Node(int id, std::string h, int p) {
+    printf("Creating Node: %d\n", id);
     id = id;
     active_status = false;
     channel = Channel(h, p);
 
     // start node server
-    printf("Starting socket for node: %d", id);
+    printf("Starting socket for node: %d\n", id);
     channel.start_socket();
 }
 
@@ -54,7 +55,7 @@ Network::Network(int mipa, int mapa, int msd, int mn, int sd) {
     snapshotDelay = sd;
 }
 
-void Network::add_nodes(std::list<Node> ns) {
+void Network::add_nodes(std::list<Node*> ns) {
     nodes = ns;
     number_of_nodes = nodes.size();
 }

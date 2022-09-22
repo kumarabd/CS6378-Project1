@@ -1,45 +1,57 @@
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
+#include <pthread.h>
+#include <unistd.h>
 #include "readConfig.cpp"
 #include "types.h"
 using namespace std;
 
+struct node_args {
+    int id;
+    std::string host;
+    int port;
+    Node * node_addr;
+};
+
+void create_nodes(node_args *args) {
+    struct node_args *as = args;
+    Node node_obj = Node(as->id, as->host, as->port);
+    as->node_addr = &node_obj;
+}
+
 int main()
 {
     printf("Reading config\n");
-    // int n = 6;
-    // int minPerActive = 2;
-    // int maxPerActive = 4;
-    // int minSendDelay = 1000;
-    // int snapshotDelay = 1000;
-    // int maxNumber = 3;
-    // std::string node_host[6] = {"localhost", "localhost", "localhost", "localhost", "localhost", "localhost"};
-    // int node_port[6] = {8000, 8001, 8002, 8003, 8004, 8005};
-	ReadConfig readconfig = ReadConfig();
-    readconfig.read_config();
+	ReadConfig config = ReadConfig();
+    config.read_config();
 
-    cout << readconfig.node << " " << readconfig.minPerActive << " " << readconfig.maxPerActive <<" " << readconfig.minSendDelay<<" " <<readconfig.snapshotDelay<< " " << readconfig.maxNumber << endl;
-    cout << "print ports" << endl;
-    for (auto port: readconfig.ports) cout << port << " "; cout << endl;
-
-    cout << "print hostnames" << endl;
-    for (auto hostName : readconfig.hostNames) cout << hostName << " "; cout << endl;
-
-    cout << "neighbours" << endl;
-    for (auto nei_list : readconfig.neighbors) {
-        for (auto neighbor : nei_list) cout << neighbor << " "; 
-        cout << endl;
+    printf("Adding nodes\n");
+    std::list<Node*> node_list;
+    pthread_t * threads = new pthread_t[config.node];
+    for(int i=0; i<config.node; i++) {
+        // Create thread
+        Node node_obj;
+        struct node_args args = { .id = i, .host = config.hostNames[i], .port = config.ports[i], .node_addr = &node_obj };
+        if(pthread_create(&threads[i], NULL, (void* (*)(void*))  (&create_nodes), (void *) &args)) {
+            perror("thread create failed");
+            exit(EXIT_FAILURE);
         }
+        usleep(clock);
+        node_list.push_back(&node_obj);
+    }
 
-    // printf("Adding nodes\n");
-    // std::list<Node> node_list;
-    // for(int i=0; i<6; i++) {
-    //     node_list.push_back(Node(i, node_host[i], node_port[i]));
-    // }
+    // wait for the threads
+    void *status;
+    for(int i=0; i<config.node; i++) {
+        pthread_join(threads[i], &status);
+        printf("node status: %d\n",*(int*)status);
+    }
 
     printf("Creating network\n");
-    //Network network = Network(minPerActive, maxPerActive, minSendDelay, snapshotDelay, maxNumber);
-    //network.add_nodes(node_list);
+    Network network = Network(config.minPerActive, config.maxPerActive, config.minSendDelay, config.snapshotDelay, config.maxNumber);
+    network.add_nodes(node_list);
+
+    // run topology
 
 }
