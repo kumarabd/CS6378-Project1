@@ -1,5 +1,5 @@
 # Project 1
-Team Details:
+## Team Details:
 
 - Abishek Kumar (AXK200020)
 
@@ -7,7 +7,7 @@ Team Details:
 
 - Mariam Aafreen Muhammed Moinuddin (MXM210042)
 
-# Instruction to compile
+## Instruction to compile
 Run the program:
 ```
 ./launcher.sh
