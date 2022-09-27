@@ -19,6 +19,10 @@ Channel::Channel(std::string h, int p) {
     }
 }
 
+struct sockaddr_in Channel::address() {
+    return this->socket_address;
+}
+
 void Channel::start_socket(int * newSocket) {
     // 3 is the max queue limit
     if (listen(server_fd, 3) < 0) {
@@ -30,13 +34,27 @@ void Channel::start_socket(int * newSocket) {
     *newSocket = accept(server_fd, (struct sockaddr*)&socket_address, &addr_size);
 }
 
-void Channel::send_socket() {
-    if (connect(this->server_fd, (struct sockaddr *)&this->socket_address, sizeof(this->socket_address))) {
-        perror("sending");
+void Channel::send_socket(struct sockaddr_in serv_addr, char* message) {
+    int sock = 0, valread, client_fd;
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        printf("\n Socket creation error \n");
         exit(EXIT_FAILURE);
     }
+ 
+    // Convert IPv4 and IPv6 addresses from text to binary
+    // form
+    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
+        printf("\nInvalid address/ Address not supported \n");
+        exit(EXIT_FAILURE);
+    }
+ 
+    if ((client_fd = connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))) < 0) {
+        printf("\nConnection Failed \n");
+        exit(EXIT_FAILURE);
+    }
+    send(sock, message, strlen(message), 0);
 
-    close(this->server_fd);
+    close(client_fd);
 }
 
 Node::Node() {};
@@ -63,19 +81,12 @@ Node::Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd) {
         // Active node send message to random node
         // if not then
         // Remove the node from network if the node reach maxNumber of messages
-        if(this->limit()) {
-            this->active_status = false;
-        } else{
-            std::list<Node> nb = this->get_neighbours();
-            int num = rand() % nb.size(); // NOTE: Check if the random number becomes itself
-            auto beg = nb.begin();
-            std::advance(beg, num);
-            Node snode = *beg;
-            snode.send_message();
-            this->iterate_max_number();
+        this->active_status = true;
+        bool status = this->process_message();
+        if(!status) {
+            break;
         }
-        // Wait for minSendDelay after sending the message
-        usleep(minSendDelay);
+        this->active_status = false;
     }
 }
 
@@ -83,34 +94,40 @@ int Node::get_id() {
     return id;
 }
 
-void Node::send_message() {
-    // Client implementation
-    printf("Sending message to node: %d\n", this->get_id());
-    this->channel.send_socket();
-}
-
-void Node::listen() {
-    while(1) {
-    }
-}
-
-void Node::add_neighbours(int id, int val) {
-    // Add here
-}
-
-std::list<Node> Node::get_neighbours() {
-    return this->neighbours;
-}
-
-void Node::iterate_max_number() {
-    this->maxNumber--;
-}
-
-bool Node::limit() {
+bool Node::process_message() {
     if(this->maxNumber == 0) {
-        return true;
+        return false;
     }
-    return false;
+
+    int random_msg_number = this->minPerActive + ( std::rand() % (this->maxPerActive - this->minPerActive + 1) );
+    random_msg_number = std::min<int>(random_msg_number, this->neighbours.size());
+    
+    printf("Sending message to node: %d\n", this->get_id());
+    for(int i=0; i<random_msg_number; i++) {
+        this->send_message(this->neighbours[i]);
+        this->maxNumber--;
+    }
+    return true;
+}
+
+struct sockaddr_in Node::get_address(){
+    return this->channel.address();
+}
+
+void Node::send_message(Node node){
+    // To be implemented
+    // Add conditions for minSendDelay()
+    struct sockaddr_in serv_addr = node.get_address();
+    char* message = "1";
+    this->channel.send_socket(serv_addr, message);
+}
+
+void Node::record_clock_value(std::vector<int> value) {
+    this->snapshots.push_back(value);
+}
+
+bool Node::verify_clock(std::vector<int> value) {
+    return value == this->snapshots.back();
 }
 
 Network::Network(int sd) {
@@ -118,30 +135,22 @@ Network::Network(int sd) {
     snapshotDelay = sd;
 }
 
-void Network::add_nodes(std::list<Node*> ns) {
+void Network::add_nodes(std::vector<Node*> ns) {
     printf("Adding nodes to the network\n");
     nodes = ns;
     number_of_nodes = nodes.size();
 }
 
+void Network::add_neighbour(int id, std::vector<int> neighbours) {
+    // Add here
+    std::vector<Node> final_neighbours;
+    for(int i=0; i<neighbours.size(); i++) {
+        final_neighbours.push_back(*this->nodes[neighbours[i]]);
+    }
+    this->nodes[id]->neighbours = final_neighbours;
+}
 
 void Network::run() {
-    printf("Running the network");
-    bool flag = true;
-    while(1) {
-        if(flag) {
-            // Setting random node to active
-            int num = rand() % number_of_nodes;
-            auto beg = nodes.begin();
-            std::advance(beg, num);
-            Node * curr_node = *beg;
-            curr_node->send_message();
-            flag = false;
-        }
-        
-        // Stop if everything is passive || the list is empty
-        if(nodes.size() == 0) {
-            break;
-        }
-    }
+    printf("Running the network\n");
+    this->nodes[0]->process_message();
 }

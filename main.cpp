@@ -32,7 +32,7 @@ int main()
     config.read_config();
 
     printf("Gathering nodes\n");
-    std::list<Node*> node_list;
+    std::vector<Node*> node_list;
     pthread_t * threads = new pthread_t[config.node];
     for(int i=0; i<config.node; i++) {
         // Create thread
@@ -50,10 +50,12 @@ int main()
     printf("Creating network\n");
     Network network = Network(config.snapshotDelay);
     network.add_nodes(node_list);
+    for(int i=0; i<config.neighbors.size(); i++) {
+        network.add_neighbour(i, config.neighbors[i]);
+    }
     printf("Network created\n");
 
     // run topology
-    printf("Run topology");
     network.run();
 
     // Generate output
