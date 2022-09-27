@@ -1,6 +1,5 @@
 #include<iostream>
 #include<string>
-#include<list>
 #include <iterator>
 #include <algorithm>
 #include <vector>
@@ -52,16 +51,4 @@ class Node {
         struct sockaddr_in get_address();
         void record_clock_value(std::vector<int> value);
         bool verify_clock(std::vector<int> value);
-};
-
-class Network {
-    private:
-        int number_of_nodes;
-        int snapshotDelay;
-        std::vector<Node*> nodes;
-    public:
-        Network(int sd);
-        void add_nodes(std::vector<Node*> n);
-        void add_neighbour(int id, std::vector<int> neighbours);
-        void run();
 };

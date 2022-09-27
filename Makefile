@@ -1,5 +1,5 @@
 all:
-	g++ main.cpp types.cpp output.cpp -o build/app 
+	g++ main.cpp network.cpp node.cpp output.cpp -o build/app 
 	./build/app
 
 clean:

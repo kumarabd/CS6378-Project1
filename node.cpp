@@ -1,4 +1,4 @@
-#include "types.h"
+#include "node.h"
 
 Channel::Channel() {};
 
@@ -95,10 +95,6 @@ int Node::get_id() {
 }
 
 bool Node::process_message() {
-    if(this->maxNumber == 0) {
-        return false;
-    }
-
     int random_msg_number = this->minPerActive + ( std::rand() % (this->maxPerActive - this->minPerActive + 1) );
     random_msg_number = std::min<int>(random_msg_number, this->neighbours.size());
     
@@ -106,6 +102,9 @@ bool Node::process_message() {
     for(int i=0; i<random_msg_number; i++) {
         this->send_message(this->neighbours[i]);
         this->maxNumber--;
+        if(this->maxNumber == 0) {
+            return false;
+        }
     }
     return true;
 }
@@ -128,29 +127,4 @@ void Node::record_clock_value(std::vector<int> value) {
 
 bool Node::verify_clock(std::vector<int> value) {
     return value == this->snapshots.back();
-}
-
-Network::Network(int sd) {
-    number_of_nodes = 0;
-    snapshotDelay = sd;
-}
-
-void Network::add_nodes(std::vector<Node*> ns) {
-    printf("Adding nodes to the network\n");
-    nodes = ns;
-    number_of_nodes = nodes.size();
-}
-
-void Network::add_neighbour(int id, std::vector<int> neighbours) {
-    // Add here
-    std::vector<Node> final_neighbours;
-    for(int i=0; i<neighbours.size(); i++) {
-        final_neighbours.push_back(*this->nodes[neighbours[i]]);
-    }
-    this->nodes[id]->neighbours = final_neighbours;
-}
-
-void Network::run() {
-    printf("Running the network\n");
-    this->nodes[0]->process_message();
 }

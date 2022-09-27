@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include "readConfig.cpp"
-#include "types.h"
+#include "network.h"
 #include "output.h"
 using namespace std;
 
