@@ -1,5 +1,5 @@
 # Project 1
-## Team Details:
+## Team Details
 
 - Abishek Kumar (AXK200020)
 
