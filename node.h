@@ -7,6 +7,9 @@
 #include <unistd.h>
 #include<sys/socket.h>
 #include<sys/types.h> 
+#include<cstring>
+#include <stdio.h>
+
 #include<netinet/in.h>
 #include <arpa/inet.h>
 #define clock 1000000
