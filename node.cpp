@@ -71,13 +71,16 @@ Node::Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd) {
 
     // start node server
     printf("Starting socket for node: %d\n", id);
-    int message = 0;
+    char* message;
     int newSocket;
     channel.start_socket(&newSocket);
     // Listen for messages
     while(1) {
         recv(newSocket, &message, sizeof(message), 0);
         printf("message receieved: %d",message);
+        std::string temp(message);
+        std::vector<int> final_vector(temp.begin(), temp.end());
+        this->snapshots.push_back(final_vector);
         // Active node send message to random node
         // if not then
         // Remove the node from network if the node reach maxNumber of messages
@@ -114,10 +117,11 @@ struct sockaddr_in Node::get_address(){
 }
 
 void Node::send_message(Node node){
-    // To be implemented
-    // Add conditions for minSendDelay()
+    usleep(this->minSendDelay);
     struct sockaddr_in serv_addr = node.get_address();
-    char* message = "1";
+    std::vector<int> curr_state = this->snapshots.back();
+    std::string str(curr_state.begin(), curr_state.end());
+    char* message = const_cast<char*>(str.c_str());
     this->channel.send_socket(serv_addr, message);
 }
 

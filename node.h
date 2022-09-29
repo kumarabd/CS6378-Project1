@@ -39,8 +39,8 @@ class Node {
         int minSendDelay;
         int minPerActive;
         int maxPerActive;
-        std::vector< std::vector<int> > snapshots;
     public:
+        std::vector< std::vector<int> > snapshots;
         std::vector<Node> neighbours;
         Node();
         Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd);
