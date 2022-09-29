@@ -117,6 +117,7 @@ void Node::send_message(Node node){
     // To be implemented
     // Add conditions for minSendDelay()
     struct sockaddr_in serv_addr = node.get_address();
+    std::vector curr_state = this->snapshots.back();
     char* message = "1";
     this->channel.send_socket(serv_addr, message);
 }
