@@ -14,18 +14,17 @@ typedef struct thread_data {
     int port;
     int mn;
     int mipa;
-    Node * node_addr;
     int mapa;
     int msd;
-}thread_data;
+} thread_data;
 
 std::vector<Node> nodes;
 
 void * create_nodes(thread_data* args) {
     thread_data *tdata = (thread_data *)args;
     Node addr = Node(tdata->id, tdata->host, tdata->port, tdata->mn, tdata->mipa, tdata->mapa, tdata->msd);
-    args->node_addr = &addr;
     nodes.push_back(addr);
+    return NULL;
 }
 
 int main()
