@@ -82,56 +82,67 @@ Node::Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd) {
     this->neighbours = empty_list;
 
     // start node server
-    this->channel.start_socket();
-    //// Listen for messages
-    //int *newSocket;
-    //char *message;
-    //while(1) {
-    //    sockaddr_in addr = this->get_address();
-    //    socklen_t addr_size = sizeof(addr);
-    //    *newSocket = accept(this->channel.fd(), (struct sockaddr*)&addr, &addr_size);
-    //    recv(*newSocket, &message, sizeof(message), 0);
-    //    printf("message receieved: %s",message);
-    //    std::string temp(message);
-    //    std::vector<int> final_vector(temp.begin(), temp.end());
-    //    this->snapshots.push_back(final_vector);
-    //    // Active node send message to random node
-    //    // if not then
-    //    // Remove the node from network if the node reach maxNumber of messages
-    //    this->active_status = true;
-    //    bool status = this->process_message();
-    //    if(!status) {
-    //        break;
-    //    }
-    //    this->active_status = false;
-    //}
-}
+    printf("Starting socket for node: %d\n", id);
+    char* message;
+    int newSocket;
+    channel.start_socket();
+    // Listen for messages
+    while(1) {
+        sockaddr_in addr = this->get_address();
+        socklen_t addr_size = sizeof(addr);
+        newSocket = accept(this->channel.fd(), (struct sockaddr*)&addr, &addr_size);
+        recv(newSocket, &message, sizeof(message), 0);
+        printf("message receieved: %d",message);
+        // Active node send message to random node
+        // if not then
+        // Remove the node from network if the node reach maxNumber of messages
+        this->active_status = true;
+        bool status = this->process_message(1, message);
+        if(!status) {
+            break;
+        }
+        this->active_status = false;
+    }
+        }
+        
 
 int Node::get_id() {
     return id;
 }
 
-bool Node::process_message() {
+bool Node::process_message(bool message_type, char *message) {
     int random_msg_number = this->minPerActive + ( std::rand() % (this->maxPerActive - this->minPerActive + 1) );
     random_msg_number = std::min<int>(random_msg_number, this->neighbours.size());
-    
-    for(int i=0; i<random_msg_number; i++) {
-        printf("Sending message to node: %d\n", this->neighbours[i]->id);
-        this->send_message(*this->neighbours[i]);
+    printf("Sending message to node: %d\n", this->get_id());
+    if (message_type == 1){
+        std::string temp(message);
+        std::vector<int> final_vector(temp.begin(), temp.end());
+        this->snapshots.push_back(final_vector);
+        for(int i=0; i<random_msg_number; i++) {
+        this->send_message(*this->neighbours[i], message_type);
         this->maxNumber--;
         if(this->maxNumber == 0) {
             return false;
         }
     }
     return true;
+    }
+    else if(message_type == 0){
+        for(int i=0; i<neighbours.size(); i++) {
+        this->send_message(*this->neighbours[i], message_type);
+    }
+    return true;
+    } 
 }
 
 struct sockaddr_in Node::get_address(){
     return this->channel.address();
 }
 
-void Node::send_message(Node node){
-    usleep(this->minSendDelay);
+void Node::send_message(Node node, bool message_type){
+    if (message_type == 1){
+        usleep(this->minSendDelay);
+    }
     struct sockaddr_in serv_addr = node.get_address();
     std::vector<int> curr_state = this->snapshots.back();
     std::string str(curr_state.begin(), curr_state.end());
