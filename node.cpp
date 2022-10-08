@@ -115,12 +115,12 @@ int Node::get_id() {
 bool Node::process_message(bool message_type, char *message) {
     int random_msg_number = this->minPerActive + ( std::rand() % (this->maxPerActive - this->minPerActive + 1) );
     random_msg_number = std::min<int>(random_msg_number, this->neighbours.size());
-    printf("Sending message to node: %d\n", this->get_id());
     if (message_type == 1){
-            std::string temp(message);
-            std::vector<int> final_vector(temp.begin(), temp.end());
-            this->snapshots.push_back(final_vector);
-            for(int i=0; i<random_msg_number; i++) {
+        std::string temp(message);
+        std::vector<int> final_vector(temp.begin(), temp.end());
+        this->states.push_back(final_vector);
+        for(int i=0; i<random_msg_number; i++) {
+            printf("Sending application message to node: %d\n", this->neighbours[i]->get_id());
             this->send_message(this->neighbours[i], message_type);
             this->maxNumber--;
             if(this->maxNumber == 0) {
@@ -131,6 +131,7 @@ bool Node::process_message(bool message_type, char *message) {
     }
     else if(message_type == 0){
         for(int i=0; i<this->neighbours.size(); i++) {
+            printf("Sending marker message to node: %d\n", this->neighbours[i]->get_id());
             this->send_message(this->neighbours[i], message_type);
         }
         return true;
@@ -147,18 +148,18 @@ void Node::send_message(Node * node, bool message_type){
         usleep(this->minSendDelay);
     }
     struct sockaddr_in serv_addr = node->get_address();
-    std::vector<int> curr_state = this->snapshots.back();
+    std::vector<int> curr_state = this->states.back();
     std::string str(curr_state.begin(), curr_state.end());
     char* message = const_cast<char*>(str.c_str());
     this->channel.send_socket(serv_addr, message);
 }
 
 void Node::record_clock_value(std::vector<int> value) {
-    this->snapshots.push_back(value);
+    this->states.push_back(value);
 }
 
 bool Node::verify_clock(std::vector<int> value) {
-    return value == this->snapshots.back();
+    return value == this->states.back();
 }
 
 void Node::info() {

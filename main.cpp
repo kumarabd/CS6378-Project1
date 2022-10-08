@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include "readConfig.cpp"
 #include "network.h"
-#include "output.h"
 using namespace std;
 
 typedef struct thread_data {
@@ -66,9 +65,6 @@ int main()
 
     // run topology
     network.run();
-
-    // Generate output
-    //generate_output(config.node);
     
     // wait for the threads
     void *status;

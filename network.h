@@ -16,4 +16,5 @@ class Network {
         void add_neighbour(int id, std::vector<int> neighbours);
         void run();
         bool verify_consistency();
+        void save();
 };
