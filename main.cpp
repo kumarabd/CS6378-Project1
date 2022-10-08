@@ -60,7 +60,6 @@ int main()
     // create a network
     Network network = Network(config.snapshotDelay);
     network.add_nodes(nodes);
-    cout << config.neighbors.size() << endl;
 
     for (auto neilist: config.neighbors) {
         for (auto nei: neilist) cout << nei << " "; cout << endl;
