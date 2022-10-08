@@ -76,7 +76,7 @@ int main()
     printf("Network created\n");
 
     // run topology
-    network.construct_mst(nodes);
+    network.construct_mst();
     network.run();
 
     // Generate output

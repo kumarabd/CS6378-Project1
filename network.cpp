@@ -13,9 +13,9 @@ void Network::add_nodes(std::vector<Node> ns) {
     this->message_counter = this->number_of_nodes;
 }
 
-void Network::construct_mst(std::vector<Node> ns) {
+void Network::construct_mst() {
     // fill up parent and children ids of all Nodes in the network
-    ns = this->nodes;
+    std::vector<Node> ns = this->nodes;
     std::vector <bool> visited(ns.size(),false);
     std::queue <int> q;
     q.push(0);
