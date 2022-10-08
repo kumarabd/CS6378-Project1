@@ -5,15 +5,24 @@ Channel::Channel() {};
 Channel::Channel(std::string h, int p) {
     printf("Creating socket\n");
     // Create socket
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    if ((this->server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
        perror("socket failed");
        exit(EXIT_FAILURE);
     }
 
     socket_address.sin_family = AF_INET;
-    socket_address.sin_addr.s_addr = INADDR_ANY;
+    //socket_address.sin_addr.s_addr = INADDR_ANY;
     socket_address.sin_port = htons(p);
-    if (bind(server_fd, (struct sockaddr*) &socket_address, sizeof(socket_address)) < 0) {
+
+    hostent* hostname = gethostbyname(h.c_str());
+    std::string st = std::string(inet_ntoa(**(in_addr**)hostname->h_addr_list));
+    //inet_aton(st.c_str(), &socket_address.sin_addr);
+    if (inet_aton(st.c_str(), &socket_address.sin_addr) < 0) {
+            perror("Address not recognized");
+            exit(EXIT_FAILURE);
+    }
+
+    if (bind(this->server_fd, (struct sockaddr*) &socket_address, sizeof(socket_address)) < 0) {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
@@ -23,15 +32,16 @@ struct sockaddr_in Channel::address() {
     return this->socket_address;
 }
 
-void Channel::start_socket(int * newSocket) {
+int Channel::fd() {
+    return this->server_fd;
+}
+
+void Channel::start_socket() {
     // 3 is the max queue limit
-    if (listen(server_fd, 3) < 0) {
+    if (listen(this->server_fd, 3) < 0) {
         perror("listening");
         exit(EXIT_FAILURE);
     }
-
-    socklen_t addr_size = sizeof(socket_address);
-    *newSocket = accept(server_fd, (struct sockaddr*)&socket_address, &addr_size);
 }
 
 void Channel::send_socket(struct sockaddr_in serv_addr, char* message) {
@@ -61,36 +71,40 @@ Node::Node() {};
 
 Node::Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd) {
     printf("Creating Node: %d\n", id);
-    id = id;
-    maxNumber = mn;
-    minPerActive = mipa;
-    maxPerActive = mapa;
-    minSendDelay = msd;
-    active_status = false;
-    channel = Channel(h, p);
+    this->id = id;
+    this->maxNumber = mn;
+    this->minPerActive = mipa;
+    this->maxPerActive = mapa;
+    this->minSendDelay = msd;
+    this->active_status = false;
+    this->channel = Channel(h, p);
+    std::vector<Node *> empty_list;
+    this->neighbours = empty_list;
 
     // start node server
-    printf("Starting socket for node: %d\n", id);
-    char* message;
-    int newSocket;
-    channel.start_socket(&newSocket);
-    // Listen for messages
-    while(1) {
-        recv(newSocket, &message, sizeof(message), 0);
-        printf("message receieved: %d",message);
-        std::string temp(message);
-        std::vector<int> final_vector(temp.begin(), temp.end());
-        this->snapshots.push_back(final_vector);
-        // Active node send message to random node
-        // if not then
-        // Remove the node from network if the node reach maxNumber of messages
-        this->active_status = true;
-        bool status = this->process_message();
-        if(!status) {
-            break;
-        }
-        this->active_status = false;
-    }
+    this->channel.start_socket();
+    //// Listen for messages
+    //int *newSocket;
+    //char *message;
+    //while(1) {
+    //    sockaddr_in addr = this->get_address();
+    //    socklen_t addr_size = sizeof(addr);
+    //    *newSocket = accept(this->channel.fd(), (struct sockaddr*)&addr, &addr_size);
+    //    recv(*newSocket, &message, sizeof(message), 0);
+    //    printf("message receieved: %s",message);
+    //    std::string temp(message);
+    //    std::vector<int> final_vector(temp.begin(), temp.end());
+    //    this->snapshots.push_back(final_vector);
+    //    // Active node send message to random node
+    //    // if not then
+    //    // Remove the node from network if the node reach maxNumber of messages
+    //    this->active_status = true;
+    //    bool status = this->process_message();
+    //    if(!status) {
+    //        break;
+    //    }
+    //    this->active_status = false;
+    //}
 }
 
 int Node::get_id() {
@@ -101,9 +115,9 @@ bool Node::process_message() {
     int random_msg_number = this->minPerActive + ( std::rand() % (this->maxPerActive - this->minPerActive + 1) );
     random_msg_number = std::min<int>(random_msg_number, this->neighbours.size());
     
-    printf("Sending message to node: %d\n", this->get_id());
     for(int i=0; i<random_msg_number; i++) {
-        this->send_message(this->neighbours[i]);
+        printf("Sending message to node: %d\n", this->neighbours[i]->id);
+        this->send_message(*this->neighbours[i]);
         this->maxNumber--;
         if(this->maxNumber == 0) {
             return false;
@@ -122,6 +136,7 @@ void Node::send_message(Node node){
     std::vector<int> curr_state = this->snapshots.back();
     std::string str(curr_state.begin(), curr_state.end());
     char* message = const_cast<char*>(str.c_str());
+    printf("Sending message to socket\n");
     this->channel.send_socket(serv_addr, message);
 }
 
@@ -131,4 +146,14 @@ void Node::record_clock_value(std::vector<int> value) {
 
 bool Node::verify_clock(std::vector<int> value) {
     return value == this->snapshots.back();
+}
+
+void Node::info() {
+    printf("id: %d\n",this->id);
+    printf("active_status: %d\n",this->active_status);
+    printf("maxNumber: %d\n",this->maxNumber);
+    printf("minSendDelay: %d\n",this->minSendDelay);
+    printf("minPerActive: %d\n",this->minPerActive);
+    printf("maxPerActive: %d\n",this->maxPerActive);
+    //printf("channel: %d",this->channel);
 }

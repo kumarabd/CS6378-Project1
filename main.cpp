@@ -8,21 +8,24 @@
 #include "output.h"
 using namespace std;
 
-struct node_args {
+typedef struct thread_data {
     int id;
     std::string host;
     int port;
     int mn;
-    Node * node_addr;
     int mipa;
+    Node * node_addr;
     int mapa;
     int msd;
-};
+}thread_data;
 
-void create_nodes(node_args *args) {
-    struct node_args *as = args;
-    Node node_obj = Node(as->id, as->host, as->port, as->mn, as->mipa, as->mapa, as->msd);
-    as->node_addr = &node_obj;
+std::vector<Node> nodes;
+
+void * create_nodes(thread_data* args) {
+    thread_data *tdata = (thread_data *)args;
+    Node addr = Node(tdata->id, tdata->host, tdata->port, tdata->mn, tdata->mipa, tdata->mapa, tdata->msd);
+    args->node_addr = &addr;
+    nodes.push_back(addr);
 }
 
 int main()
@@ -34,22 +37,29 @@ int main()
     printf("Gathering nodes\n");
     std::vector<Node*> node_list;
     pthread_t * threads = new pthread_t[config.node];
+    thread_data * args = new thread_data[config.node];
     for(int i=0; i<config.node; i++) {
         // Create thread
-        Node node_obj;
-        struct node_args args = { .id = i, .host = config.hostNames[i], .port = config.ports[i], .mn = config.maxNumber , .node_addr = &node_obj, .mipa = config.minPerActive, .mapa = config.maxPerActive, .msd = config.minSendDelay};
-        if(pthread_create(&threads[i], NULL, (void* (*)(void*))  (&create_nodes), (void *) &args)) {
+        args[i].id = i;
+        args[i].host = config.hostNames[i];
+        args[i].port = config.ports[i];
+        args[i].mn = config.maxNumber;
+        args[i].mipa = config.minPerActive;
+        args[i].mapa = config.maxPerActive;
+        args[i].msd = config.minSendDelay;
+
+        if(pthread_create(&threads[i], NULL, (void* (*)(void*))  (&create_nodes), (void *) &args[i])) {
             perror("thread create failed");
             exit(EXIT_FAILURE);
         }
         usleep(clock);
-        node_list.push_back(&node_obj);
+        //args->node_addr->info();
     }
 
     // create a network
     printf("Creating network\n");
     Network network = Network(config.snapshotDelay);
-    network.add_nodes(node_list);
+    network.add_nodes(nodes);
     for(int i=0; i<config.neighbors.size(); i++) {
         network.add_neighbour(i, config.neighbors[i]);
     }
@@ -67,4 +77,5 @@ int main()
         pthread_join(threads[i], &status);
         printf("node status: %d\n",*(int*)status);
     }
+    return 0;
 }

@@ -9,9 +9,9 @@
 #include<sys/types.h> 
 #include<cstring>
 #include <stdio.h>
-
 #include<netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #define clock 1000000
 
 typedef struct {
@@ -28,9 +28,10 @@ class Channel {
     public:
         Channel();
         Channel(std::string h, int p);
-        void start_socket(int * s);
+        void start_socket();
         void send_socket(struct sockaddr_in serv_addr, char* message);
         struct sockaddr_in address();
+        int fd();
 };
 
 class Node {
@@ -44,7 +45,7 @@ class Node {
         int maxPerActive;
     public:
         std::vector< std::vector<int> > snapshots;
-        std::vector<Node> neighbours;
+        std::vector<Node*> neighbours;
         Node();
         Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd);
         int get_id();
@@ -54,4 +55,5 @@ class Node {
         struct sockaddr_in get_address();
         void record_clock_value(std::vector<int> value);
         bool verify_clock(std::vector<int> value);
+        void info();
 };
