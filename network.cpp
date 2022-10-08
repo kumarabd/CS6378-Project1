@@ -19,16 +19,8 @@ void Network::add_neighbour(int id, std::vector<int> neighbours) {
 
 void Network::run() {
     printf("Running the network\n");
-<<<<<<< HEAD
-    //for(int i=0; i<this->nodes.size();i++) {
-    //    this->nodes[i]->info();
-    //}
-    //this->nodes[0]->info();
-    this->nodes[0].process_message();
-=======
     // this->nodes[0]->process_message(1);
-    this->nodes[0]->process_message(0,"start");
->>>>>>> cb2f0e63d4086ea9dee8a242ea9587f39b749752
+    this->nodes[0].process_message(0,"start");
     while(this->message_counter) {
         this->message_counter--;
     }
