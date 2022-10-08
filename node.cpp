@@ -86,8 +86,10 @@ Node::Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd) {
     char* message;
     int newSocket;
     channel.start_socket();
-    // Listen for messages
+    // Side-stepping the rest of the Node workflow to test MST. Delete later.
     return;
+    // Listen for messages
+    
     while(1) {
         sockaddr_in addr = this->get_address();
         socklen_t addr_size = sizeof(addr);
