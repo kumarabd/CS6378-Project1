@@ -69,12 +69,13 @@ int main()
 
     // Generate output
     //generate_output(config.node);
-
-     // wait for the threads
+    
+    // wait for the threads
     void *status;
     for(int i=0; i<config.node; i++) {
         pthread_join(threads[i], &status);
-        printf("node status: %d\n",*(int*)status);
+        //printf("node status: %d\n",*(int*)status);
     }
+
     return 0;
 }

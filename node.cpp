@@ -47,19 +47,19 @@ void Channel::start_socket() {
 void Channel::send_socket(struct sockaddr_in serv_addr, char* message) {
     int sock = 0, valread, client_fd;
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        printf("\n Socket creation error \n");
+        perror("\n Socket creation error \n");
         exit(EXIT_FAILURE);
     }
  
     // Convert IPv4 and IPv6 addresses from text to binary
     // form
     if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
-        printf("\nInvalid address/ Address not supported \n");
+        perror("\nInvalid address/ Address not supported \n");
         exit(EXIT_FAILURE);
     }
  
     if ((client_fd = connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))) < 0) {
-        printf("\nConnection Failed \n");
+        perror("\nConnection Failed \n");
         exit(EXIT_FAILURE);
     }
     send(sock, message, strlen(message), 0);
@@ -121,7 +121,7 @@ bool Node::process_message(bool message_type, char *message) {
             std::vector<int> final_vector(temp.begin(), temp.end());
             this->snapshots.push_back(final_vector);
             for(int i=0; i<random_msg_number; i++) {
-            this->send_message(*this->neighbours[i], message_type);
+            this->send_message(this->neighbours[i], message_type);
             this->maxNumber--;
             if(this->maxNumber == 0) {
                 return false;
@@ -130,8 +130,8 @@ bool Node::process_message(bool message_type, char *message) {
         return true;
     }
     else if(message_type == 0){
-        for(int i=0; i<neighbours.size(); i++) {
-            this->send_message(*this->neighbours[i], message_type);
+        for(int i=0; i<this->neighbours.size(); i++) {
+            this->send_message(this->neighbours[i], message_type);
         }
         return true;
     }
@@ -142,15 +142,14 @@ struct sockaddr_in Node::get_address(){
     return this->channel.address();
 }
 
-void Node::send_message(Node node, bool message_type){
+void Node::send_message(Node * node, bool message_type){
     if (message_type == 1){
         usleep(this->minSendDelay);
     }
-    struct sockaddr_in serv_addr = node.get_address();
+    struct sockaddr_in serv_addr = node->get_address();
     std::vector<int> curr_state = this->snapshots.back();
     std::string str(curr_state.begin(), curr_state.end());
     char* message = const_cast<char*>(str.c_str());
-    printf("Sending message to socket\n");
     this->channel.send_socket(serv_addr, message);
 }
 
