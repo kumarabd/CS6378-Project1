@@ -83,6 +83,12 @@ void Network::add_neighbour(int id, std::vector<int> neighbours) {
 
 void Network::run() {
     printf("Running the network\n");
+    // Initialize states to 0
+    std::vector<int> init_state(this->nodes.size(), 0);
+    for(int i=0; i < this->nodes.size() ; i++) {
+        this->nodes[i].snapshots.push_back(init_state);
+    }
+
     // Start the nodes
     for(int i =0; i< this->nodes.size();i++) {
         std::future<void> ft = std::async(std::launch::async, &Node::listen, this->nodes[i]);
