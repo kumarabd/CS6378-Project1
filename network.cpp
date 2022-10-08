@@ -23,7 +23,8 @@ void Network::add_neighbour(int id, std::vector<int> neighbours) {
 
 void Network::run() {
     printf("Running the network\n");
-    this->nodes[0]->process_message();
+    // this->nodes[0]->process_message(1);
+    this->nodes[0]->process_message(0,"start");
     while(this->message_counter) {
         this->message_counter--;
     }

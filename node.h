@@ -37,6 +37,7 @@ class Node {
     private:
         int id;
         bool active_status;
+        // bool message_type; //0->control message and 1->applications message
         Channel channel;
         int maxNumber;
         int minSendDelay;
@@ -48,10 +49,11 @@ class Node {
         Node();
         Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd);
         int get_id();
-        bool process_message();
-        void send_message(Node node);
+        bool process_message(bool message_type, char *message);
+        void send_message(Node node, bool message_type);
         void add_neighbour(std::vector<int> neighbours);
         struct sockaddr_in get_address();
         void record_clock_value(std::vector<int> value);
         bool verify_clock(std::vector<int> value);
+        void sending_snapshot();
 };
