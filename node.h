@@ -64,4 +64,5 @@ class Node {
         bool verify_clock(std::vector<int> value);
         void info();
         void sending_snapshot();
+        void listen();
 };

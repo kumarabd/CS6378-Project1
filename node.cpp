@@ -80,14 +80,14 @@ Node::Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd) {
     this->channel = Channel(h, p);
     std::vector<Node *> empty_list;
     this->neighbours = empty_list;
+}
 
+void Node::listen() {
     // start node server
-    printf("Starting socket for node: %d\n", id);
+    printf("Starting socket for node: %d\n", this->get_id());
     char* message;
     int newSocket;
-    channel.start_socket();
-    // Side-stepping the rest of the Node workflow to test MST. Delete later.
-    return;
+    this->channel.start_socket();
     // Listen for messages
     
     while(1) {
@@ -95,7 +95,7 @@ Node::Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd) {
         socklen_t addr_size = sizeof(addr);
         newSocket = accept(this->channel.fd(), (struct sockaddr*)&addr, &addr_size);
         recv(newSocket, &message, sizeof(message), 0);
-        printf("message receieved: %d",message);
+        printf("message receieved: %s",message);
         // Active node send message to random node
         // if not then
         // Remove the node from network if the node reach maxNumber of messages
@@ -106,7 +106,7 @@ Node::Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd) {
         }
         this->active_status = false;
     }
-        }
+}
         
 
 int Node::get_id() {
@@ -134,24 +134,25 @@ bool Node::process_message(bool message_type, char *message) {
     random_msg_number = std::min<int>(random_msg_number, this->neighbours.size());
     printf("Sending message to node: %d\n", this->get_id());
     if (message_type == 1){
-        std::string temp(message);
-        std::vector<int> final_vector(temp.begin(), temp.end());
-        this->snapshots.push_back(final_vector);
-        for(int i=0; i<random_msg_number; i++) {
-        this->send_message(*this->neighbours[i], message_type);
-        this->maxNumber--;
-        if(this->maxNumber == 0) {
-            return false;
+            std::string temp(message);
+            std::vector<int> final_vector(temp.begin(), temp.end());
+            this->snapshots.push_back(final_vector);
+            for(int i=0; i<random_msg_number; i++) {
+            this->send_message(*this->neighbours[i], message_type);
+            this->maxNumber--;
+            if(this->maxNumber == 0) {
+                return false;
+            }
         }
-    }
-    return true;
+        return true;
     }
     else if(message_type == 0){
         for(int i=0; i<neighbours.size(); i++) {
-        this->send_message(*this->neighbours[i], message_type);
+            this->send_message(*this->neighbours[i], message_type);
+        }
+        return true;
     }
     return true;
-    } 
 }
 
 struct sockaddr_in Node::get_address(){
