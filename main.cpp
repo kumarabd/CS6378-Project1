@@ -22,9 +22,12 @@ typedef struct thread_data {
 std::vector<Node> nodes;
 
 void * create_nodes(thread_data* args) {
+    
     thread_data *tdata = (thread_data *)args;
     Node addr = Node(tdata->id, tdata->host, tdata->port, tdata->mn, tdata->mipa, tdata->mapa, tdata->msd);
+    cout<<"adding"<<endl;
     args->node_addr = &addr;
+    
     nodes.push_back(addr);
 }
 
@@ -54,18 +57,26 @@ int main()
         }
         usleep(clock);
         //args->node_addr->info();
+        cout << "node size "<< nodes.size()<<endl;
     }
 
     // create a network
-    printf("Creating network\n");
     Network network = Network(config.snapshotDelay);
     network.add_nodes(nodes);
+    cout << config.neighbors.size() << endl;
+
+    for (auto neilist: config.neighbors) {
+        for (auto nei: neilist) cout << nei << " "; cout << endl;
+    }
+
     for(int i=0; i<config.neighbors.size(); i++) {
+
         network.add_neighbour(i, config.neighbors[i]);
     }
     printf("Network created\n");
 
     // run topology
+    network.construct_mst(nodes);
     network.run();
 
     // Generate output
@@ -77,5 +88,7 @@ int main()
         pthread_join(threads[i], &status);
         printf("node status: %d\n",*(int*)status);
     }
+
+    // cout << nodes.size() << endl;
     return 0;
 }

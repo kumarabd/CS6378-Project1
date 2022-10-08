@@ -87,6 +87,7 @@ Node::Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd) {
     int newSocket;
     channel.start_socket();
     // Listen for messages
+    return;
     while(1) {
         sockaddr_in addr = this->get_address();
         socklen_t addr_size = sizeof(addr);
@@ -108,6 +109,22 @@ Node::Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd) {
 
 int Node::get_id() {
     return id;
+}
+
+void Node::setChildren(std::vector <int> childrenIds) {
+    this->childrenIds = childrenIds;
+}
+
+void Node::setParent(int parentId) {
+    this->parentId = parentId;
+}
+
+std::vector<int> Node::getChildren() {
+    return childrenIds;
+}
+
+int Node::getParent() {
+    return parentId;
 }
 
 bool Node::process_message(bool message_type, char *message) {

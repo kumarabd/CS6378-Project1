@@ -12,6 +12,7 @@ class Network {
     public:
         Network(int sd);
         void add_nodes(std::vector<Node> n);
+        void construct_mst(std::vector<Node> n);
         void add_neighbour(int id, std::vector<int> neighbours);
         void run();
         bool verify_consistency();

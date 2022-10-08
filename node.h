@@ -44,6 +44,8 @@ class Node {
         int minSendDelay;
         int minPerActive;
         int maxPerActive;
+        int parentId;
+        std::vector <int> childrenIds;
     public:
         std::vector< std::vector<int> > snapshots;
         std::vector<Node*> neighbours;
@@ -53,6 +55,10 @@ class Node {
         bool process_message(bool message_type, char *message);
         void send_message(Node node, bool message_type);
         void add_neighbour(std::vector<int> neighbours);
+        void setParent (int parentId);
+        void setChildren (std::vector<int> parentId);
+        int getParent ();
+        std::vector<int> getChildren ();
         struct sockaddr_in get_address();
         void record_clock_value(std::vector<int> value);
         bool verify_clock(std::vector<int> value);
