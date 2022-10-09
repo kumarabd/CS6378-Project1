@@ -38,8 +38,8 @@ void Network::run() {
     usleep(clock);
 
     // Send process messages to start with process 0
-    char * message = "start";
-    this->nodes[0].process_message(0, message);
+    message msg = { 0, "start" };
+    this->nodes[0].process_message(msg);
     while(this->message_counter) {
         this->message_counter--;
     }

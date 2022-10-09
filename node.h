@@ -20,6 +20,11 @@ typedef struct {
     int addr_len;
 } connection_t;
 
+typedef struct {
+    bool type;
+    char * data;
+} message;
+
 class Channel {
     private:
         int size;
@@ -29,7 +34,7 @@ class Channel {
         Channel();
         Channel(std::string h, int p);
         void start_socket();
-        void send_socket(struct sockaddr_in serv_addr, char* message);
+        void send_socket(struct sockaddr_in serv_addr, message msg);
         struct sockaddr_in address();
         int fd();
 };
@@ -37,7 +42,7 @@ class Channel {
 class Node {
     private:
         int id;
-        bool active_status;
+        bool active_status, run;
         // bool message_type; //0->control message and 1->applications message
         Channel channel;
         int maxNumber;
@@ -50,8 +55,8 @@ class Node {
         Node();
         Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd);
         int get_id();
-        bool process_message(bool message_type, char *message);
-        void send_message(Node * node, bool message_type);
+        bool process_message(message msg);
+        void send_message(Node * node, message msg);
         void add_neighbour(std::vector<int> neighbours);
         struct sockaddr_in get_address();
         void record_clock_value(std::vector<int> value);
