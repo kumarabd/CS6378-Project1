@@ -4,12 +4,12 @@
 
 # Node ID, Host name, port
 
-0 localhost 8010
-1 localhost 8011 
-2 localhost 8012 
-3 localhost 8013 
-4 localhost 8014 
-5 localhost 8015
+0 localhost 8110
+1 localhost 8111 
+2 localhost 8112 
+3 localhost 8113 
+4 localhost 8114 
+5 localhost 8115
 
 # Neighbours of respective nodes
 

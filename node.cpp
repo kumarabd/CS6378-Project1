@@ -1,9 +1,31 @@
 #include "node.h"
 
+std::string convertToString(char* a, int size)
+{
+    int i;
+    std::string s = "";
+    for (i = 0; i < size; i++) {
+        s = s + a[i];
+    }
+    return s;
+}
+
+std::vector<int> intersection(std::vector<int> v1,
+                                      std::vector<int> v2){
+    std::vector<int> v3;
+
+    std::sort(v1.begin(), v1.end());
+    std::sort(v2.begin(), v2.end());
+
+    std::set_intersection(v1.begin(),v1.end(),
+                          v2.begin(),v2.end(),
+                          back_inserter(v3));
+    return v3;
+}
+
 Channel::Channel() {};
 
 Channel::Channel(std::string h, int p) {
-    printf("Creating socket\n");
     // Create socket
     if ((this->server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
        perror("socket failed");
@@ -44,7 +66,7 @@ void Channel::start_socket() {
     }
 }
 
-void Channel::send_socket(struct sockaddr_in serv_addr, message msg) {
+void Channel::send_socket(struct sockaddr_in serv_addr, std::string msg) {
     int sock = 0, valread, client_fd;
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("\n Socket creation error \n");
@@ -62,7 +84,7 @@ void Channel::send_socket(struct sockaddr_in serv_addr, message msg) {
         perror("\nConnection Failed \n");
         exit(EXIT_FAILURE);
     }
-    send(sock, msg.data, strlen(msg.data), 0);
+    send(sock, msg.c_str(), strlen(msg.c_str()), 0);
     //close(client_fd);
 }
 
@@ -84,8 +106,6 @@ Node::Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd) {
 
 void Node::listen() {
     // start node server
-    printf("Starting socket for node: %d\n", this->get_id());
-    message msg;
     int newSocket;
     this->channel.start_socket();
     // Listen for messages
@@ -100,13 +120,18 @@ void Node::listen() {
         // read message
         char buffer[1024] = {0};
         int reader = read(newSocket, buffer, 1024);
-        printf("message received: %s\n",buffer);
 
+        std::string delimiter = "///";
+        std::string data = convertToString(buffer, sizeof(buffer)/sizeof(char));
+        std::string source = data.substr(0, data.find(delimiter));
+        std::string content = data.substr(1, data.find(delimiter));
+        std::string type = data.substr(2, data.find(delimiter));
+        // eg: "0///<data>///0"
         // Active node send message to random node
         // if not then
         // Remove the node from network if the node reach maxNumber of messages
         this->active_status = true;
-        msg = { 0, "test"};
+        message msg = { atoi(type.c_str()), const_cast<char*>(content.c_str()), atoi(source.c_str())};
         bool status = this->process_message(msg);
         if(!status) {
             break;
@@ -121,9 +146,12 @@ int Node::get_id() {
 }
 
 bool Node::process_message(message msg) {
-    this->info();
     int recepient_size;
     std::vector<Node*> recepients;
+    std::vector<int>::iterator position;
+    if(msg.source >= 0 && !this->marker_cycle) {
+        this->marker_pending.push_back(msg.source);
+    }
     // Application messages
     if (msg.type){
         int random_msg_number = this->minPerActive + ( std::rand() % (this->maxPerActive - this->minPerActive + 1) );
@@ -145,28 +173,47 @@ bool Node::process_message(message msg) {
     }
     // Marker messages
     else {
-        recepient_size = this->marker_pending.size();
-        recepients = this->marker_pending;
+        recepient_size = this->neighbours.size();
+        recepients = this->neighbours;
     }
-    for(int i=0; i<recepient_size; i++) {
-        printf("Sending message of type %d from %d to node: %d\n", msg.type, this->get_id(), recepients[i]->get_id());
-        this->send_message(recepients[i], msg);
-        int idx;
-        for(idx=0; idx<this->marker_pending.size();idx++) {
-            if(this->marker_pending[idx] == recepients[idx]) {
-                break;
+    
+    if(this->marker_pending.size() == 0) {
+        this->marker_cycle = false;
+    }
+    if(this->marker_cycle) {
+        position = std::find(this->marker_pending.begin(),this->marker_pending.end(), msg.source);
+        if(position != this->marker_pending.end()) {
+            this->marker_pending.erase(position);
+        } else {
+            std::vector<int> recp_ids;
+            for(int i=0; i<recepients.size(); i++) {
+                recp_ids.push_back(recepients[i]->get_id());
+            }
+            std::vector<int> results = intersection(recp_ids, this->marker_pending);
+            std::vector<Node *> final_nodes;
+            for(int i=0; i<results.size(); i++) {
+                position = std::find(this->marker_pending.begin(),this->marker_pending.end(), msg.source);
+                int d = std::distance(this->marker_pending.begin(), position);
+                if(position != this->marker_pending.end()) {
+                    final_nodes.push_back(recepients.at(d));
+                }
+            }
+
+            for(int i=0; i<final_nodes.size(); i++) {
+                this->marker_pending.push_back(final_nodes[i]->get_id()); // Marking request message
+                printf("Sending message of type %d from %d to node: %d\n", msg.type, this->get_id(), final_nodes[i]->get_id());
+                this->send_message(final_nodes[i], msg);
             }
         }
-        // Remove the reply messages
-        this->marker_pending.erase(this->marker_pending.begin()+idx);
-        if(this->marker_pending.size() == 0) {
-            printf("Marker messages for node %d is null\n", this->get_id());
+    } else {
+        for(int i=0; i<recepient_size; i++) {
+            this->marker_pending.push_back(recepients[i]->get_id()); // Marking request message
+            printf("Sending message of type %d from %d to node: %d\n", msg.type, this->get_id(), recepients[i]->get_id());
+            this->send_message(recepients[i], msg);
         }
-        for(int i=0; i<this->marker_pending.size();i++){
-            printf("Marker messages for node %d is %d\n", this->get_id(), this->marker_pending[i]->get_id());
-        }
+        this->marker_cycle = true;
     }
-    return true;
+    usleep(clock*2);
 }
 
 struct sockaddr_in Node::get_address(){
@@ -177,11 +224,18 @@ void Node::send_message(Node * node, message msg){
     if (msg.type){
         usleep(this->minSendDelay);
     }
-    struct sockaddr_in serv_addr = node->get_address();
     std::vector<int> curr_state = this->states.back();
+    curr_state[this->get_id()] += 1;
+    this->record_clock_value(curr_state);
+
+    struct sockaddr_in serv_addr = node->get_address();
     std::string str(curr_state.begin(), curr_state.end());
     char* message = const_cast<char*>(str.c_str());
-    this->channel.send_socket(serv_addr, msg);
+    std::string m = std::to_string(this->get_id()) +"///";
+    m = m + msg.data;
+    m = m + "///";
+    m = m + std::to_string(int(msg.type));
+    this->channel.send_socket(serv_addr, m);
 }
 
 void Node::record_clock_value(std::vector<int> value) {

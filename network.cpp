@@ -17,7 +17,7 @@ void Network::add_nodes(std::vector<Node> ns) {
 void Network::add_neighbour(int id, std::vector<int> neighbours) {
     for(int i=0; i<neighbours.size(); i++) {
         this->nodes[id].neighbours.push_back(&this->nodes[neighbours[i]]);
-        this->nodes[id].marker_pending.push_back(&this->nodes[neighbours[i]]);
+        //this->nodes[id].marker_pending.push_back(&this->nodes[neighbours[i]]);
     }
 }
 
@@ -39,18 +39,18 @@ void Network::run() {
     usleep(clock);
 
     // Send process messages to start with process 0
-    message msg = { 0, "start" };
+    message msg = { 0, "start", -1 };
     this->nodes[0].process_message(msg);
     while(this->message_counter) {
         this->message_counter--;
     }
 
     // Verify consistency of global states
-    //if(this->verify_consistency()) {
-    //    printf("State consistent\n");
-    //}else {
-    //    printf("State inconsistent\n");
-    //}
+    if(this->verify_consistency()) {
+        printf("State consistent\n");
+    }else {
+        printf("State inconsistent\n");
+    }
 }
 
 bool Network::verify_consistency() {

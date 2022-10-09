@@ -21,8 +21,9 @@ typedef struct {
 } connection_t;
 
 typedef struct {
-    bool type;
+    int type;
     char * data;
+    int source;
 } message;
 
 class Channel {
@@ -34,7 +35,7 @@ class Channel {
         Channel();
         Channel(std::string h, int p);
         void start_socket();
-        void send_socket(struct sockaddr_in serv_addr, message msg);
+        void send_socket(struct sockaddr_in serv_addr, std::string msg);
         struct sockaddr_in address();
         int fd();
 };
@@ -52,7 +53,8 @@ class Node {
     public:
         std::vector< std::vector<int> > states;
         std::vector<Node*> neighbours;
-        std::vector<Node*> marker_pending;
+        std::vector<int> marker_pending;
+        bool marker_cycle;
         Node();
         Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd);
         int get_id();

@@ -65,6 +65,7 @@ int main()
 
     // run topology
     network.run();
+    network.save();
     
     // wait for the threads
     void *status;
