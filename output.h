@@ -6,4 +6,4 @@
 
 using namespace std;
 
-extern void generate_output(int n);
+extern void generate_output(std::vector< std::vector<int> > snapshots, std::string name);

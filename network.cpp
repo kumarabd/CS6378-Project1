@@ -1,6 +1,7 @@
 #include "network.h"
 #include <queue>
 #include <vector>
+#include "output.h"
 
 std::vector<std::future<void>> pending_futures;
 
@@ -86,7 +87,7 @@ void Network::run() {
     // Initialize states to 0
     std::vector<int> init_state(this->nodes.size(), 0);
     for(int i=0; i < this->nodes.size() ; i++) {
-        this->nodes[i].snapshots.push_back(init_state);
+        this->nodes[i].states.push_back(init_state);
     }
 
     // Start the nodes
@@ -99,8 +100,8 @@ void Network::run() {
     usleep(clock);
 
     // Send process messages to start with process 0
-    char * message = "start";
-    this->nodes[0].process_message(0, message);
+    message msg = { 0, "start" };
+    this->nodes[0].process_message(msg);
     while(this->message_counter) {
         this->message_counter--;
     }
@@ -114,11 +115,17 @@ void Network::run() {
 }
 
 bool Network::verify_consistency() {
-    std::vector<int> global_snapshot = this->nodes[0].snapshots.back();
+    std::vector<int> global_snapshot = this->nodes[0].states.back();
     for(int i=0; i<this->number_of_nodes;i++) {
-        if(this->nodes[i].snapshots.back()[i] != global_snapshot[i]) {
+        if(this->nodes[i].states.back()[i] != global_snapshot[i]) {
             return false;
         }
     }
     return true;
+}
+
+void Network::save() {
+    for(int i=0; i<this->nodes.size(); i++) {
+        generate_output(this->nodes[i].states, std::to_string(this->nodes[i].get_id()));
+    }
 }

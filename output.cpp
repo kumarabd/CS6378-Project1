@@ -1,9 +1,12 @@
 #include "output.h"
 
-void generate_output(int n) {
-    for(int i=0; i<n; i++) {
-        std::string file = "build/test2-"+std::to_string(i);
-        file = file+".out";
-        std::ofstream outfile(file.c_str());
+extern void generate_output(std::vector< std::vector<int> > snapshots, std::string name) {
+    printf("Creating output for %s\n", name.c_str());
+    for(int i=0; i<snapshots.size(); i++) {
+        for(int j=0; j<snapshots[i].size(); j++) {
+            std::string file = "test1-"+name;
+            file = file+".out";
+            std::ofstream outfile(file.c_str());
+        }
     }
 }

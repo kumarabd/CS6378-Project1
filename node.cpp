@@ -44,7 +44,7 @@ void Channel::start_socket() {
     }
 }
 
-void Channel::send_socket(struct sockaddr_in serv_addr, char* message) {
+void Channel::send_socket(struct sockaddr_in serv_addr, message msg) {
     int sock = 0, valread, client_fd;
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("\n Socket creation error \n");
@@ -62,9 +62,8 @@ void Channel::send_socket(struct sockaddr_in serv_addr, char* message) {
         perror("\nConnection Failed \n");
         exit(EXIT_FAILURE);
     }
-    send(sock, message, strlen(message), 0);
-
-    close(client_fd);
+    send(sock, msg.data, strlen(msg.data), 0);
+    //close(client_fd);
 }
 
 Node::Node() {};
@@ -76,6 +75,7 @@ Node::Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd) {
     this->minPerActive = mipa;
     this->maxPerActive = mapa;
     this->minSendDelay = msd;
+    this->run = true;
     this->active_status = false;
     this->channel = Channel(h, p);
     std::vector<Node *> empty_list;
@@ -85,22 +85,39 @@ Node::Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd) {
 void Node::listen() {
     // start node server
     printf("Starting socket for node: %d\n", this->get_id());
-    char* message;
+    message msg;
     int newSocket;
     this->channel.start_socket();
     // Listen for messages
+<<<<<<< HEAD
     
     while(1) {
+=======
+    while(this->run) {
+>>>>>>> 07ad849652f7839a5390dfce53fd96c4ca83a882
         sockaddr_in addr = this->get_address();
         socklen_t addr_size = sizeof(addr);
-        newSocket = accept(this->channel.fd(), (struct sockaddr*)&addr, &addr_size);
-        recv(newSocket, &message, sizeof(message), 0);
-        printf("message receieved: %s",message);
+        if ((newSocket = accept(this->channel.fd(), (struct sockaddr*)&addr, &addr_size)) < 0) {
+            perror("unable to accept\n");
+            exit(EXIT_FAILURE);
+        }
+        printf("listening for %d\n", this->get_id());
+
+        //inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
+        //printf("server: got connection from %s\n", s);
+
+        //// read message
+        //char buffer[1024] = {0};
+        //int reader = read(newSocket, buffer, 1024);
+        //printf("%s\n", buffer);
+        //printf("message received: %s",buffer);
+
         // Active node send message to random node
         // if not then
         // Remove the node from network if the node reach maxNumber of messages
         this->active_status = true;
-        bool status = this->process_message(1, message);
+        msg = { 0, "test"};
+        bool status = this->process_message(msg);
         if(!status) {
             break;
         }
@@ -128,29 +145,33 @@ std::vector<int> Node::getChildren() {
 int Node::getParent() {
     return parentId;
 }
+bool Node::process_message(message msg) {
+    int recepient_size;
+    // Application messages
+    if (msg.type){
+        int random_msg_number = this->minPerActive + ( std::rand() % (this->maxPerActive - this->minPerActive + 1) );
+        random_msg_number = std::min<int>(random_msg_number, this->neighbours.size());
+        random_msg_number = std::min<int>(random_msg_number, this->maxNumber);
+        if(this->maxNumber < random_msg_number) {
+            this->maxNumber = 0;
+            this->run = false;
+        } else {
+            this->maxNumber = this->maxNumber - random_msg_number;
+        }
 
-bool Node::process_message(bool message_type, char *message) {
-    int random_msg_number = this->minPerActive + ( std::rand() % (this->maxPerActive - this->minPerActive + 1) );
-    random_msg_number = std::min<int>(random_msg_number, this->neighbours.size());
-    printf("Sending message to node: %d\n", this->get_id());
-    if (message_type == 1){
-            std::string temp(message);
-            std::vector<int> final_vector(temp.begin(), temp.end());
-            this->snapshots.push_back(final_vector);
-            for(int i=0; i<random_msg_number; i++) {
-            this->send_message(this->neighbours[i], message_type);
-            this->maxNumber--;
-            if(this->maxNumber == 0) {
-                return false;
-            }
-        }
-        return true;
+        std::string temp(msg.data);
+        std::vector<int> final_vector(temp.begin(), temp.end());
+        this->states.push_back(final_vector);
+        recepient_size = random_msg_number;
     }
-    else if(message_type == 0){
-        for(int i=0; i<this->neighbours.size(); i++) {
-            this->send_message(this->neighbours[i], message_type);
-        }
-        return true;
+    // Marker messages
+    else {
+        recepient_size = this->neighbours.size();
+    }
+    for(int i=0; i<recepient_size; i++) {
+        printf("message type: %d\n", msg.type);
+        printf("Sending message to node: %d\n", this->neighbours[i]->get_id());
+        this->send_message(this->neighbours[i], msg);
     }
     return true;
 }
@@ -159,23 +180,23 @@ struct sockaddr_in Node::get_address(){
     return this->channel.address();
 }
 
-void Node::send_message(Node * node, bool message_type){
-    if (message_type == 1){
+void Node::send_message(Node * node, message msg){
+    if (msg.type){
         usleep(this->minSendDelay);
     }
     struct sockaddr_in serv_addr = node->get_address();
-    std::vector<int> curr_state = this->snapshots.back();
+    std::vector<int> curr_state = this->states.back();
     std::string str(curr_state.begin(), curr_state.end());
     char* message = const_cast<char*>(str.c_str());
-    this->channel.send_socket(serv_addr, message);
+    this->channel.send_socket(serv_addr, msg);
 }
 
 void Node::record_clock_value(std::vector<int> value) {
-    this->snapshots.push_back(value);
+    this->states.push_back(value);
 }
 
 bool Node::verify_clock(std::vector<int> value) {
-    return value == this->snapshots.back();
+    return value == this->states.back();
 }
 
 void Node::info() {
