@@ -52,6 +52,7 @@ class Node {
     public:
         std::vector< std::vector<int> > states;
         std::vector<Node*> neighbours;
+        std::vector<Node*> marker_pending;
         Node();
         Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd);
         int get_id();

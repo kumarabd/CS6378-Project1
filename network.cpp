@@ -17,6 +17,7 @@ void Network::add_nodes(std::vector<Node> ns) {
 void Network::add_neighbour(int id, std::vector<int> neighbours) {
     for(int i=0; i<neighbours.size(); i++) {
         this->nodes[id].neighbours.push_back(&this->nodes[neighbours[i]]);
+        this->nodes[id].marker_pending.push_back(&this->nodes[neighbours[i]]);
     }
 }
 
