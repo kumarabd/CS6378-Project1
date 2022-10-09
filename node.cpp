@@ -152,6 +152,12 @@ bool Node::process_message(message msg) {
     if(msg.source >= 0 && !this->marker_cycle) {
         this->marker_pending.push_back(msg.source);
     }
+
+    std::vector<int> curr_state = this->states.back();
+    this->states.pop_back();
+    curr_state[this->get_id()] += 1;
+    this->states.push_back(curr_state);
+
     // Application messages
     if (msg.type){
         int random_msg_number = this->minPerActive + ( std::rand() % (this->maxPerActive - this->minPerActive + 1) );
@@ -160,7 +166,6 @@ bool Node::process_message(message msg) {
         if(this->maxNumber < random_msg_number) {
             this->maxNumber = 0;
             this->run = false;
-            printf("Dying\n");
         } else {
             this->maxNumber = this->maxNumber - random_msg_number;
         }
@@ -232,7 +237,7 @@ void Node::send_message(Node * node, message msg){
     std::string str(curr_state.begin(), curr_state.end());
     char* message = const_cast<char*>(str.c_str());
     std::string m = std::to_string(this->get_id()) +"///";
-    m = m + msg.data;
+    m = m + message;
     m = m + "///";
     m = m + std::to_string(int(msg.type));
     this->channel.send_socket(serv_addr, m);
