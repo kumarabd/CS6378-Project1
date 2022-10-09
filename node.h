@@ -3,6 +3,7 @@
 #include <iterator>
 #include <algorithm>
 #include <vector>
+#include <map>
 #include<pthread.h>
 #include <unistd.h>
 #include<sys/socket.h>
@@ -21,7 +22,8 @@ typedef struct {
 } connection_t;
 
 typedef struct {
-    bool type;
+    int type;
+    int senderId;
     char * data;
 } message;
 
@@ -55,6 +57,10 @@ class Node {
         std::vector< std::vector<int> > states;
         std::vector<Node*> neighbours;
         std::vector<Node*> marker_pending;
+        bool clState = false;
+        int convergeChildrenCounter;
+        bool transitMsgs = true;
+        std::map <int, bool> channelCLActive;
         Node();
         Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd);
         int get_id();

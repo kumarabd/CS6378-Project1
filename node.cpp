@@ -80,6 +80,7 @@ Node::Node(int id, std::string h, int p, int mn, int mipa, int mapa, int msd) {
     this->channel = Channel(h, p);
     std::vector<Node *> empty_list;
     this->neighbours = empty_list;
+    
 }
 
 void Node::listen() {
@@ -106,7 +107,7 @@ void Node::listen() {
         // if not then
         // Remove the node from network if the node reach maxNumber of messages
         this->active_status = true;
-        msg = { 0, "test"};
+        msg = { 0, 0, "test"};
         bool status = this->process_message(msg);
         if(!status) {
             break;
@@ -140,7 +141,7 @@ bool Node::process_message(message msg) {
     int recepient_size;
     std::vector<Node*> recepients;
     // Application messages
-    if (msg.type){
+    if (msg.type == 0){
         int random_msg_number = this->minPerActive + ( std::rand() % (this->maxPerActive - this->minPerActive + 1) );
         random_msg_number = std::min<int>(random_msg_number, this->neighbours.size());
         random_msg_number = std::min<int>(random_msg_number, this->maxNumber);
@@ -159,27 +160,64 @@ bool Node::process_message(message msg) {
         recepients = this->neighbours;
     }
     // Marker messages
-    else {
+    else if (msg.type == 1){
         recepient_size = this->marker_pending.size();
         recepients = this->marker_pending;
+        if(this->clState == false) {
+            this->clState = true;
+            // send marker to all the neighbours
+            //start noting all channel incoming activity from neighbours
+        } else {
+            recepient_size = 0;
+            std::vector<Node*>emp(0);
+            recepients = emp;
+        }
+    } else {
+        assert(msg.type == 2);
+        this->convergeChildrenCounter --;
+        transitMsgs &= (msg.data[0]=='T');
+        if (! this->convergeChildrenCounter) {
+            // send msg to parent this->getParendId()
+            // should have 2 followed by T/F
+            message msg;
+            if(transitMsgs) {
+                msg = {0, this->get_id(), "T"};
+            } else {
+                msg = {0, this->get_id(), "F"};
+            }   
+            int parent_idx = -1;
+            for (auto neighbour: neighbours) {
+                parent_idx ++;
+                if (neighbour->get_id() == this->getParent())
+                    break;
+            }
+            this->send_message(neighbours[parent_idx], msg);
+        }
+        
+        if(this->get_id() == 0) {
+            //for root node
+            if(!this->convergeChildrenCounter) {
+                if (transitMsgs) {
+                    //STOP THE ENTIRE APPLICATION
+                } else {
+                    // CONTINUE SENDING SNAPSHOT REQUESTS
+                }
+            }
+        }
+
+        // mark yourself as false for the next CL invocation
+        this->clState = false;
+        // transitmsgs should also be made true for the next invocation
+        this->transitMsgs = true;
+        
+        recepient_size = 0;
+        std::vector<Node*>emp(0);
+        recepients = emp;
     }
+    msg.senderId = this->get_id();
     for(int i=0; i<recepient_size; i++) {
         printf("Sending message of type %d from %d to node: %d\n", msg.type, this->get_id(), recepients[i]->get_id());
         this->send_message(recepients[i], msg);
-        int idx;
-        for(idx=0; idx<this->marker_pending.size();idx++) {
-            if(this->marker_pending[idx] == recepients[idx]) {
-                break;
-            }
-        }
-        // Remove the reply messages
-        this->marker_pending.erase(this->marker_pending.begin()+idx);
-        if(this->marker_pending.size() == 0) {
-            printf("Marker messages for node %d is null\n", this->get_id());
-        }
-        for(int i=0; i<this->marker_pending.size();i++){
-            printf("Marker messages for node %d is %d\n", this->get_id(), this->marker_pending[i]->get_id());
-        }
     }
     return true;
 }

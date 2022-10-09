@@ -43,6 +43,7 @@ void Network::construct_mst() {
                 }
             }
             ns[currNode].setChildren(children);
+            ns[currNode].convergeChildrenCounter = children.size();
         } else {
             std::vector <int> children;
             for (int i=0; i<(ns[currNode].neighbours).size(); i++) {
@@ -57,6 +58,7 @@ void Network::construct_mst() {
                 }
             }
             ns[currNode].setChildren(children);
+            ns[currNode].convergeChildrenCounter = children.size();
         }
     }
     // printing out parents and children list for verification
@@ -75,15 +77,10 @@ void Network::construct_mst() {
 
 
 void Network::add_neighbour(int id, std::vector<int> neighbours) {
-
     for(int i=0; i<neighbours.size(); i++) {
-<<<<<<< HEAD
-        std::cout << neighbours[i] << (this->nodes).size()<< std::endl;
-        this->nodes[id].neighbours.push_back(&(this->nodes[neighbours[i]]));
-=======
         this->nodes[id].neighbours.push_back(&this->nodes[neighbours[i]]);
         this->nodes[id].marker_pending.push_back(&this->nodes[neighbours[i]]);
->>>>>>> master
+        this->nodes[id].channelCLActive[(&this->nodes[neighbours[i]])->get_id()] = false;
     }
 }
 
