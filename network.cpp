@@ -77,8 +77,13 @@ void Network::construct_mst() {
 void Network::add_neighbour(int id, std::vector<int> neighbours) {
 
     for(int i=0; i<neighbours.size(); i++) {
+<<<<<<< HEAD
         std::cout << neighbours[i] << (this->nodes).size()<< std::endl;
         this->nodes[id].neighbours.push_back(&(this->nodes[neighbours[i]]));
+=======
+        this->nodes[id].neighbours.push_back(&this->nodes[neighbours[i]]);
+        this->nodes[id].marker_pending.push_back(&this->nodes[neighbours[i]]);
+>>>>>>> master
     }
 }
 

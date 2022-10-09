@@ -96,16 +96,11 @@ void Node::listen() {
             perror("unable to accept\n");
             exit(EXIT_FAILURE);
         }
-        printf("listening for %d\n", this->get_id());
 
-        //inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
-        //printf("server: got connection from %s\n", s);
-
-        //// read message
-        //char buffer[1024] = {0};
-        //int reader = read(newSocket, buffer, 1024);
-        //printf("%s\n", buffer);
-        //printf("message received: %s",buffer);
+        // read message
+        char buffer[1024] = {0};
+        int reader = read(newSocket, buffer, 1024);
+        printf("message received: %s\n",buffer);
 
         // Active node send message to random node
         // if not then
@@ -141,7 +136,9 @@ int Node::getParent() {
     return parentId;
 }
 bool Node::process_message(message msg) {
+    this->info();
     int recepient_size;
+    std::vector<Node*> recepients;
     // Application messages
     if (msg.type){
         int random_msg_number = this->minPerActive + ( std::rand() % (this->maxPerActive - this->minPerActive + 1) );
@@ -150,6 +147,7 @@ bool Node::process_message(message msg) {
         if(this->maxNumber < random_msg_number) {
             this->maxNumber = 0;
             this->run = false;
+            printf("Dying\n");
         } else {
             this->maxNumber = this->maxNumber - random_msg_number;
         }
@@ -158,15 +156,30 @@ bool Node::process_message(message msg) {
         std::vector<int> final_vector(temp.begin(), temp.end());
         this->states.push_back(final_vector);
         recepient_size = random_msg_number;
+        recepients = this->neighbours;
     }
     // Marker messages
     else {
-        recepient_size = this->neighbours.size();
+        recepient_size = this->marker_pending.size();
+        recepients = this->marker_pending;
     }
     for(int i=0; i<recepient_size; i++) {
-        printf("message type: %d\n", msg.type);
-        printf("Sending message to node: %d\n", this->neighbours[i]->get_id());
-        this->send_message(this->neighbours[i], msg);
+        printf("Sending message of type %d from %d to node: %d\n", msg.type, this->get_id(), recepients[i]->get_id());
+        this->send_message(recepients[i], msg);
+        int idx;
+        for(idx=0; idx<this->marker_pending.size();idx++) {
+            if(this->marker_pending[idx] == recepients[idx]) {
+                break;
+            }
+        }
+        // Remove the reply messages
+        this->marker_pending.erase(this->marker_pending.begin()+idx);
+        if(this->marker_pending.size() == 0) {
+            printf("Marker messages for node %d is null\n", this->get_id());
+        }
+        for(int i=0; i<this->marker_pending.size();i++){
+            printf("Marker messages for node %d is %d\n", this->get_id(), this->marker_pending[i]->get_id());
+        }
     }
     return true;
 }
@@ -201,5 +214,7 @@ void Node::info() {
     printf("minSendDelay: %d\n",this->minSendDelay);
     printf("minPerActive: %d\n",this->minPerActive);
     printf("maxPerActive: %d\n",this->maxPerActive);
+    printf("Neighbours: %d\n", this->neighbours.size());
+    printf("Marker pending: %d\n", this->marker_pending.size());
     //printf("channel: %d",this->channel);
 }
