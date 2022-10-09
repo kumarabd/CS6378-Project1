@@ -89,12 +89,7 @@ void Node::listen() {
     int newSocket;
     this->channel.start_socket();
     // Listen for messages
-<<<<<<< HEAD
-    
-    while(1) {
-=======
     while(this->run) {
->>>>>>> 07ad849652f7839a5390dfce53fd96c4ca83a882
         sockaddr_in addr = this->get_address();
         socklen_t addr_size = sizeof(addr);
         if ((newSocket = accept(this->channel.fd(), (struct sockaddr*)&addr, &addr_size)) < 0) {
